@@ -12,13 +12,13 @@
 const uint32_t IP_STR_SIZE = 16;
 const uint32_t MAC_STR_SIZE = 16;
 
-VOID ip_num_to_str(uint32_t num, char* str) {
+void ip_num_to_str(uint32_t num, char* str) {
   uint8_t* buf = (uint8_t*)&num;
   sprintf(str, "%d.%d.%d.%d",
     buf[3], buf[2], buf[1], buf[0]);
 }
 
-VOID ip_str_to_num(const char* str, uint32_t* num) {
+void ip_str_to_num(const char* str, uint32_t* num) {
   uint32_t tmp[4];
   sscanf(str, "%d.%d.%d.%d",
     &tmp[3], &tmp[2], &tmp[1], &tmp[0]);
