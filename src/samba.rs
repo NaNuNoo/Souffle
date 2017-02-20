@@ -213,8 +213,68 @@ fn decode_negotiate(buffer: &Vec<u8>) -> Option<DecodeNegotiate> {
 }
 
 //
-// 
+// session param
 //
+
+#[derive(Default)]
+struct EncodeSessionParam {
+    session_key: u32,
+    lanman: &str,
+    ntlm: &str,
+}
+
+fn encode_session_param(param: &EncodeSessionParam) -> Vec<u8> {
+    let mut buffer: Vec<u8> = Vec::with_capacity(VEC_INIT_SIZE);
+    buffer.extend_from_slice(&encode_u8_le(0xFF));
+    buffer.extend_from_slice(&encode_u8_le(0x00));
+    buffer.extend_from_slice(&encode_u16_le(0x0000));
+    buffer.extend_from_slice(&encode_u16_le(0xFFFF));
+    buffer.extend_from_slice(&encode_u16_le(0x0001));
+    buffer.extend_from_slice(&encode_u16_le(0x0001));
+    buffer.extend_from_slice(&encode_u32_le(param.session_key));
+    buffer.extend_from_slice(&encode_u16_le(lanman.len() as u16));
+    buffer.extend_from_slice(&encode_u16_le(ntlm.len() as u16));
+    buffer.extend_from_slice(&encode_u32_le(0x00000000));
+    buffer.extend_from_slice(&encode_u32_le(0x00000050));
+    return buffer;
+}
+
+#[derive(Default)]
+struct DecodeSessionParam {
+}
+
+fn decode_session_param(buffer: &[u8]) -> Option<DecodeSessionParam> {
+}
+
+//
+// session data
+//
+
+struct EncodeSessionData {
+    lanman: &str,
+    ntlm: &str,
+    username: &str,
+    domain: &str,
+}
+
+fn encode_session_data(data: &EncodeSessionData) -> Vec<u8> {
+    let mut buffer: Vec<u8> = Vec::with_capacity(VEC_INIT_SIZE);
+    buffer.extend_from_slice(data.lanman.as_bytes());
+    buffer.extend_from_slice(data.ntlm.as_bytes());
+    buffer.extend_from_slice(data.username.as_bytes());
+    buffer.extend_from_slice(&encode_u8_le(0));
+    buffer.extend_from_slice(data.domain.as_bytes());
+    buffer.extend_from_slice(&encode_u8_le(0));
+    buffer.extend_from_slice("Windows\0");
+    buffer.extend_from_slice("Native Lanman\0");
+    return buffer;
+}
+
+struct DecodeSessionData {
+}
+
+fn decode_session_data(buffer: &[u8]) -> Option<DecodeSessionData> {
+}
 
 #[allow(dead_code)]
 impl Context {
