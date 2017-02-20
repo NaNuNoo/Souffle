@@ -21,91 +21,200 @@ struct Context {
     mac_key: String
 }
 
-struct Header {
-    samba: [u8; 4],
+//
+// header
+//
+
+#[derive(Default)]
+struct EncodeHeader {
     command: u8,
-    status: u32,
-    flags: u8,
-    flags2: u16,
-    pid_high: u8,
-    signature: u64,
-    unused: u16,
-    tid: u16,
-    uid: u16,
     pid: u16,
     mid: u16,
 }
 
-impl Header {
-    fn new_empty() -> {
-        return Header {
-            samba: [0; 4],
-            command: 0,
-            status: 0,
-            flags: 0,
-            flags2: 0,
-            pid_high: 0,
-            signature: 0,
-            unused: 0,
-            tid: 0,
-            uid: 0,
-            pid: 0,
-            mid: 0,
-        }
-    }
-
-    fn new_default() -> {
-        return Header {
-            samba: SMB_REQUEST_SIGN,
-            command: 0,
-            status: 0,
-            flags: 0x18,
-            flags2: 0x6045,
-            pid_high: 0,
-            signature: 0,
-            unused: 0,
-            tid: 0,
-            uid: 0,
-            pid: 0,
-            mid: 0,
-        }
-    }
-
-
-    #[allow(dead_code)]
-    fn encode(&self) -> Vec<u8> {
-        let mut buffer: Vec<u8> = Vec::with_capacity(VEC_INIT_SIZE);
-        buffer.extend_from_slice(&self.samba);
-        buffer.extend_from_slice(&encode_u8_le(self.command));
-        buffer.extend_from_slice(&encode_u32_le(self.status));
-        buffer.extend_from_slice(&encode_u8_le(self.flags));
-        buffer.extend_from_slice(&encode_u16_le(self.flags2));
-        buffer.extend_from_slice(&encode_u16_le(self.pid_high));
-        buffer.extend_from_slice(&encode_u64_le(self.signature));
-        buffer.extend_from_slice(&encode_u16_le(self.unused));
-        buffer.extend_from_slice(&encode_u16_le(self.tid));
-        buffer.extend_from_slice(&encode_u16_le(self.pid));
-        buffer.extend_from_slice(&encode_u16_le(self.uid));
-        buffer.extend_from_slice(&encode_u16_le(self.mid));
-        return buffer;
-    }
-
-    #[allow(dead_code)]
-    fn decode(&self, buffer: &[u8]) {
-        self.sign = header[0..4];
-        self.command = decode_u8_le(header[4..5]);
-        self.status = decode_u8_le(header[5..9]);
-        self.flags = decode_u8_le(header[9..10]);
-        self.flags2 = decode_u8_le(header[10..12]);
-        self.pid_high = decode_u16_le(header[12..14]);
-        self.signature = decode_u64_le(header[14..22]);
-        self.unused = decode_u16_le(header[22..24]);
-        self.tid = decode_u16_le(header[24..26]);
-        self.pid = decode_u16_le(header[26..28]);
-        self.uid = decode_u16_le(header[28..30]);
-        self.mid = decode_u16_le(header[30..32]);
-    }
+#[allow(dead_code)]
+fn encode_header(header: &EncodeHeader) -> Vec<u8> {
+    let mut buffer: Vec<u8> = Vec::with_capacity(VEC_INIT_SIZE);
+    buffer.extend_from_slice(&SMB_REQUEST_SIGN);
+    buffer.extend_from_slice(&encode_u8_le(header.command));
+    buffer.extend_from_slice(&encode_u32_le(0));
+    buffer.extend_from_slice(&encode_u8_le(0x18));
+    buffer.extend_from_slice(&encode_u16_le(0x6045));
+    buffer.extend_from_slice(&encode_u16_le(0));
+    buffer.extend_from_slice(&encode_u64_le(0));
+    buffer.extend_from_slice(&encode_u16_le(0));
+    buffer.extend_from_slice(&encode_u16_le(0));
+    buffer.extend_from_slice(&encode_u16_le(header.pid));
+    buffer.extend_from_slice(&encode_u16_le(0));
+    buffer.extend_from_slice(&encode_u16_le(header.mid));
+    return buffer;
 }
+
+#[derive(Default)]
+struct DecodeHeader {
+    command: u8,
+    flags2: u16,
+    signature: u64,
+}
+
+#[allow(dead_code)]
+fn decode_header(buffer: &[u8]) -> Option<DecodeHeader> {
+    let header = DecodeHeader::default();
+    if buffer.len() != SMB_HEADER_SIZE {
+        return None;
+    }
+    let sign: &[u8] = header[0..4];
+    if sign != SMB_RESPONSE_SIGN {
+        return None;
+    }
+    header.command = decode_u8_le(header[4..5]);
+    //header.status = decode_u8_le(header[5..9]);
+    //header.flags = decode_u8_le(header[9..10]);
+    header.flags2 = decode_u8_le(header[10..12]);
+    //header.pid_high = decode_u16_le(header[12..14]);
+    header.signature = decode_u64_le(header[14..22]);
+    //header.unused = decode_u16_le(header[22..24]);
+    //header.tid = decode_u16_le(header[24..26]);
+    //header.pid = decode_u16_le(header[26..28]);
+    //header.uid = decode_u16_le(header[28..30]);
+    //header.mid = decode_u16_le(header[30..32]);
+    return Some(header);
+}
+
+//
+// negotiate param
+//
+
+#[derive(Default)]
+struct EncodeNegotiateParam {
+}
+
+fn encode_negotiate_param(param: &EncodeNegotiateParam) -> Vec<u8> {
+    let mut buffer: Vec<u8> = Vec::with_capacity(VEC_INIT_SIZE);
+    return buffer;
+}
+
+#[derive(Default)]
+struct DecodeNegotiateParam {
+    security_mode: u8,
+    max_mpx: u16,
+    max_vc: u16,
+    max_buffer: u32,
+    max_raw_buffer: u32,
+    session_key: u32,
+    capabilities: u32,
+    time: u64,
+    timezone: u16,
+    key_length: u8,
+}
+
+fn decode_negotiate_param(buffer: &[u8]) -> Option<DecodeNegotiateParam> {
+    let param = DecodeNegotiateParam::default();
+    // parameter
+    param.security_mode = decode_u8_le(param_buf[0..1]);
+    param.max_mpx = decode_u16_le(param_buf[1..3]);
+    param.max_vc = decode_u16_le(param_buf[3..5]);
+    param.max_buffer = decode_u32_le(param_buf[5..9]);
+    param.max_raw_buffer = decode_u32_le(param_buf[9..13]);
+    param.session_key = decode_u32_le(param_buf[13..17]);
+    param.capabilities = decode_u32_le(param_buf[17..21]);
+    if (param_buf.len() >= 25) {
+        param.time = decode_u64_le(param_buf[21..25]);
+    }
+    if (param_buf.len() >= 27) {
+        param.timezone = decode_u16_le(param_buf[25..27]);
+    }
+    if (param_buf.len() >= 28) {
+        param.key_length = decode_u8_le(param_buf[27..28]);
+    }
+    return Some(param);
+}
+
+//
+// negotiate data
+//
+
+#[derive(Default)]
+struct EncodeNegotiateData {
+}
+
+fn encode_negotiate_data(param: &EncodeNegotiateData) -> Vec<u8> {
+    let mut buffer: Vec<u8> = Vec::with_capacity(VEC_INIT_SIZE);
+    buffer.extend_from_slice(&encode_u8_le(2));
+    buffer.extend_from_slice("NT LM 0.12\0".as_bytes());
+    buffer.extend_from_slice(&encode_u8_le(2));
+    buffer.extend_from_slice("\0".as_bytes());
+    return buffer;
+}
+
+#[derive(Default)]
+struct DecodeNegotiateData {
+    server_challenge: Vec<u8>,
+    server_guid: Vec<u8>,
+    security_blob: Vec<u8>,
+}
+
+fn decode_negotiate_data(buffer: &[u8], key_length: usize) -> Option<DecodeNegotiateData> {
+    let data = DecodeNegotiateData::default();
+    let offset: usize = 0;
+    data.server_challenge = data[0..key_length];
+    offset = offset + self.key_length;
+    data.server_guid = data[offset..offset+16];
+    offset = offset + 16;
+    self.security_blob = data[offset..];
+    return Some(data);
+}
+
+//
+// negotiate
+//
+
+#[allow(dead_code)]
+fn encode_negotiate() -> Vec<u8> {
+    // header
+    let header = EncodeHeader::default();
+    header.command = SMB_COM_NEGOTIATE;
+    header.mid = 1;
+    header.pid = 12345;
+    let header_buf = encode_header(&header);
+    // param
+    let param = EncodeNegotiateParam();
+    let param_buf = encode_negotiate_param(&param);
+    // data
+    let data = EncodeNegotiateData();
+    let data_buf = encode_negotiate_data(&data);
+    // packet
+    let packet = encode_packet(&header_buf, &param_buf, &data_buf);
+    return packet;
+}
+
+#[derive(Default)]
+struct DecodeNegotiate {
+    extended_security: bool,
+    server_challenge: Vec<u8>,
+    server_guid: Vec<u8>,
+}
+
+fn decode_negotiate(buffer: &Vec<u8>) -> Option<DecodeNegotiate> {
+    let result = DecodeNegotiate::default();
+    let (header_buf, param_buf, data_buf) = decode_packet(buffer);
+    // header
+    let header: DecodeHeader = decode_header(&header).unwrap();
+    result.extended_security = !(header.flags2 & 0x0800)
+    // param
+    let param: DecodeNegotiateParam = decode_negotiate_param(&param_buf).unwrap();
+    // data
+    if result.extended_security {
+        let data: DecodeNegotiateData = decode_negotiate_data(&data_buf).unwrap();
+        result.server_challenge = data.server_challenge;
+        result.server_guid = data.server_guid;
+    }
+    return result;
+}
+
+//
+// 
+//
 
 #[allow(dead_code)]
 impl Context {
@@ -152,68 +261,6 @@ impl Context {
         let data: &[u8] = packet[data_start..data_finish];
         return (header, param, data);
     }
-
-    #[allow(dead_code)]
-    fn encode_negotiate(&mut self) -> Vec<u8> {
-        // header
-        let mut header = Header::new_default();
-        header.command = SMB_COM_NEGOTIATE;
-        header.mid = self.mid;
-        header.pid = self.pid;
-        // parameter
-        let mut param: Vec<u8> = vec![0; 0];
-        // data
-        let mut data: Vec<u8> = Vec::with_capacity(VEC_INIT_SIZE);
-        data.extend_from_slice(&encode_u8_le(2));
-        data.extend_from_slice("NT LM 0.12\0".as_bytes());
-        data.extend_from_slice(&encode_u8_le(2));
-        data.extend_from_slice("\0".as_bytes());
-        // packet
-        let packet = _encode_packet(&self, &header, &param, &data);
-        return packet;
-    }
-
-    fn decode_negotiate(&mut self, buffer: &Vec<u8>) -> bool {
-        // header
-        let mut header = Header::new_empty();
-        header.decode(buffer[0..SMB_HEADER_SIZE]);
-        if header.samba != SMB_RESPONSE_SIGN {
-            return false;
-        }
-        self.extended_security = !(header.flags2 & 0x0800);
-        // parameter
-        self.security_mode = decode_u8_le(param_buf[0..1]);
-        self.max_mpx = decode_u16_le(param_buf[1..3]);
-        self.max_vc = decode_u16_le(param_buf[3..5]);
-        self.max_buffer = decode_u32_le(param_buf[5..9]);
-        self.max_raw_buffer = decode_u32_le(param_buf[9..13]);
-        self.session_key = decode_u32_le(param_buf[13..17]);
-        self.capabilities = decode_u32_le(param_buf[17..21]);
-        if (param_buf.len() >= 25) {
-            self.time = decode_u64_le(param_buf[21..25]);
-        }
-        if (param_buf.len() >= 27) {
-            self.timezone = decode_u16_le(param_buf[25..27]);
-        }
-        if (param_buf.len() >= 28) {
-            self.key_length = decode_u8_le(param_buf[27..28]);
-        }
-        // data
-        if self.extended_security {
-            let offset: usize = 0;
-            self.server_challenge = data[0..self.key_length];
-            offset = offset + self.key_length;
-            self.server_guid = data[offset..offset+16];
-            offset = offset + 16;
-            seld.security_blob = data[offset..];
-        }
-    }
-}
-
-#[allow(dead_code)]
-fn decode_negotiate_protocol(self: &Context, header_buf: &Vec<u8>) -> Option<> {
-    let header: &[u8] = header_buf[0..4];
-    if
 }
 
 #[cfg(test)]
