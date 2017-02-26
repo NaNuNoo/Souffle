@@ -2,5 +2,6 @@
 name = "souffle"
 version = "0.1.0"
 authors = ["nanuno"]
+build = "build.rs"
 
 [dependencies]
