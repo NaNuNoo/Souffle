@@ -1,24 +1,3 @@
-use std::error;
-use std::process;
-use std::fs;
-use std::path;
-
-type BoxErr = Box<error::Error>;
-
-fn list_cpp(mod_name: &str) -> Result<Vec<String>, BoxErr> {
-    let mod_path = path::Path::new(
-        &format!(".\\src\\{}", mod_name)
-    );
-    if !mod_path.is_dir() {
-        return Err(
-            format!("Not a mod {}", mod_name)
-        );
-    }
-    let file_name_vec: Vec<String> = Vec::new();
-    for iter in try!(fs::read_dir(mod_path)) {
-        let file_path = try!(iter).path();
-        if !file_path.is_file() {
-            continue;
 use std::process;
 use std::fs;
 use std::path;
